@@ -8,4 +8,4 @@ description = "VBA macros compiled to JavaScript for TraceDraw's script engine"
 [dependencies]
 
 [dev-dependencies]
-boa_engine = "0.20"
+boa_engine = "0.22"
