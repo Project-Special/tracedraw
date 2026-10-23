@@ -1,0 +1,49 @@
+# Bitmap import
+
+File > Import (Ctrl+I) of a PNG, JPEG, BMP, GIF, TIFF or WebP file
+embeds the image as a bitmap object centred on the page and remembers
+the file (Bitmaps > Update from Link reads it again).
+
+## Linked files follow their changes
+
+A linked bitmap (an imported file, or one sent to the system image
+editor by Edit Bitmap) follows its file on the desktop: once a second
+the files' modification times are read, and a bitmap whose file changed
+since it was last seen is read again on the spot, as Update from Link
+does (`App::watch_linked_bitmaps`; one undo step per change, the status
+bar says "Bitmap updated from its file"). So a save in the outside
+editor shows in the drawing at once. A file seen for the first time is
+only remembered; a file that cannot be read is left alone. The browser
+has no files to watch
+(`clipboard::linked_watch_tests::a_linked_bitmap_is_read_again_when_its_file_changes`).
+
+A link to a network path (`\\host\share\...`) that came in an opened
+file is not watched: looking at it would make the system sign in to
+whatever host the file names. It is watched once the user imports from
+that path or runs Update from Link on it in the session
+(`clipboard::linked_watch_tests::a_network_link_from_a_file_is_watched_only_once_chosen`).
+
+## Size
+
+The bitmap comes in at the resolution its file records, so a 300 dpi
+scan 1200 pixels wide is 101.6 mm wide:
+
+| Format | Where the resolution comes from |
+|---|---|
+| PNG | the `pHYs` chunk, when its unit is the metre (pixels per metre x 0.0254) |
+| JPEG | the JFIF header's density in dots per inch or per centimetre; else the EXIF `XResolution`/`YResolution` with their `ResolutionUnit` |
+| TIFF | `XResolution`/`YResolution` with `ResolutionUnit` (inch or centimetre) |
+| BMP | the header's pixels per metre |
+
+Width in mm = pixels x 25.4 / horizontal dpi, height likewise with the
+vertical dpi. A file that records no resolution, only an aspect ratio,
+or a value outside 1 to 100000 dpi comes in at 96 dpi. Pasted images
+and generated pictures are placed at 96 dpi.
+
+## Checks
+
+- Each reader gives the stored value and nothing for missing, broken or
+  out-of-range data (`image_dpi::tests`).
+- Given a PNG of 4 pixels at 300 dpi, when imported, then it is
+  4 x 25.4 / 300 mm wide; a PNG without `pHYs` is 4 x 25.4 / 96 mm wide
+  (`image_dpi::tests::import_places_a_bitmap_at_its_resolution`).
